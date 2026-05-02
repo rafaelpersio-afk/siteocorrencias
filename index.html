@@ -3,139 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Ocorrências Escolares - SaaS</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .container {
-            text-align: center;
-            max-width: 800px;
-            padding: 40px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        }
-        h1 {
-            font-size: 3em;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-        }
-        .subtitle {
-            font-size: 1.2em;
-            margin-bottom: 40px;
-            opacity: 0.9;
-        }
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin: 40px 0;
-        }
-        .feature {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 10px;
-            backdrop-filter: blur(5px);
-        }
-        .feature h3 {
-            margin-top: 0;
-            color: #ffd700;
-        }
-        .btn {
-            display: inline-block;
-            padding: 15px 30px;
-            background: #ffd700;
-            color: #333;
-            text-decoration: none;
-            border-radius: 50px;
-            font-weight: bold;
-            font-size: 1.1em;
-            transition: all 0.3s ease;
-            margin: 10px;
-        }
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-        .btn.secondary {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-        }
-        .schools {
-            margin: 30px 0;
-        }
-        .schools h3 {
-            color: #ffd700;
-        }
-        .school-list {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 10px;
-        }
-        .school {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 10px 15px;
-            border-radius: 20px;
-            font-size: 0.9em;
-        }
-        .footer {
-            margin-top: 40px;
-            opacity: 0.7;
-            font-size: 0.9em;
-        }
-    </style>
+    <title>Sistema de Ocorrências - Login</title>
+    <link rel="stylesheet" href="frontend/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <div class="container">
-        <h1>📚 Sistema de Ocorrências Escolares</h1>
-        <p class="subtitle">Plataforma SaaS moderna para gerenciamento de ocorrências escolares com multi-tenancy por instituição</p>
-
-        <div class="features">
-            <div class="feature">
-                <h3>👥 Sistema de Usuários</h3>
-                <p>Super Admin, Admin e Usuário com permissões específicas</p>
-            </div>
-            <div class="feature">
-                <h3>🏫 Multi-Tenancy</h3>
-                <p>Isolamento completo de dados por escola</p>
-            </div>
-            <div class="feature">
-                <h3>📝 Gerenciamento</h3>
-                <p>Criação e visualização de ocorrências escolares</p>
-            </div>
-            <div class="feature">
-                <h3>🔐 Segurança</h3>
-                <p>Autenticação JWT e criptografia de senhas</p>
-            </div>
-        </div>
-
-        <div class="schools">
-            <h3>Escolas Disponíveis</h3>
-            <div class="school-list">
-                <div class="school">🏫 COLEGIO ADV DO CAMPO LIMPO</div>
-                <div class="school">🏫 COLEGIO ADV PIRAJUSSARA</div>
-                <div class="school">🏫 ESCOLA ADV DA ALVORADA</div>
-            </div>
-        </div>
-
-        <a href="https://sistema-ocorrencias.onrender.com" class="btn" target="_blank">🚀 Acessar Sistema Online</a>
-        <a href="https://github.com/persiorafael-pixel/rafael2" class="btn secondary" target="_blank">📖 Ver no GitHub</a>
-
-        <div class="footer">
-            <p>Desenvolvido com ❤️ usando Node.js, Express, SQLite e JavaScript</p>
-            <p>© 2026 Rafael Pereira - Sistema de Ocorrências Escolares</p>
+    <div class="login-container">
+        <div class="login-card">
+            <h2><i class="fas fa-school"></i> Sistema de Ocorrências</h2>
+            <form id="loginForm">
+                <div class="input-group">
+                    <label for="username"><i class="fas fa-user"></i> Usuário</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="input-group">
+                    <label for="password"><i class="fas fa-lock"></i> Senha</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <div class="input-group">
+                    <label for="empresa"><i class="fas fa-building"></i> Escola</label>
+                    <select id="empresa" name="empresa_id">
+                        <option value="">Selecione uma escola (opcional para super_admin)</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-login">ENTRAR</button>
+            </form>
+            <a href="frontend/pages/createUser.html" id="createUserLink" class="create-user-link">Criar novo usuário</a>
         </div>
     </div>
+    <script src="frontend/js/login.js"></script>
 </body>
 </html>
