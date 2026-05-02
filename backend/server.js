@@ -50,6 +50,11 @@ authDb.serialize(() => {
       authDb.run("INSERT INTO users (username, password, empresa_id, role, status) VALUES (?, ?, 2, 'usuario', 'aprovado')", ['junior.usuario', hashedPassword]);
     }
   });
+  authDb.get("SELECT * FROM users WHERE username = 'maria.usuario'", (err, row) => {
+    if (!row) {
+      authDb.run("INSERT INTO users (username, password, empresa_id, role, status) VALUES (?, ?, 3, 'usuario', 'aprovado')", ['maria.usuario', hashedPassword]);
+    }
+  });
 });
 
 // Create app data tables
@@ -93,7 +98,7 @@ function verifyToken(req, res, next) {
 // Routes
 app.post('/login', (req, res) => {
   const { username, password, empresa_id } = req.body;
-  authDb.get("SELECT * FROM users WHERE username = ?", [username], (err, user) => {
+  authDb.get("SELECT * FROM users WHERE LOWER(username) = LOWER(?)", [username], (err, user) => {
     if (err || !user) return res.status(400).json({ error: 'Usuário não encontrado' });
     if (!bcrypt.compareSync(password, user.password)) return res.status(400).json({ error: 'Senha incorreta' });
     if (user.status !== 'aprovado') return res.status(400).json({ error: 'Usuário não aprovado' });
