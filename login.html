@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Ocorrências - Login</title>
+    <link rel="stylesheet" href="frontend/css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .back-to-schools {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+        .back-to-schools:hover {
+            background: #764ba2;
+        }
+        .login-container {
+            position: relative;
+        }
+        .school-info {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-to-schools"><i class="fas fa-arrow-left"></i> Voltar</a>
+    
+    <div class="login-container">
+        <div class="login-card">
+            <h2><i class="fas fa-school"></i> Sistema de Ocorrências</h2>
+            <form id="loginForm">
+                <div class="input-group">
+                    <label for="username"><i class="fas fa-user"></i> Usuário</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="input-group">
+                    <label for="password"><i class="fas fa-lock"></i> Senha</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <div class="input-group" id="schoolSelectGroup" style="display: none;">
+                    <label for="empresa"><i class="fas fa-building"></i> Escola</label>
+                    <select id="empresa" name="empresa_id">
+                        <option value="">Selecione uma escola (opcional para super_admin)</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-login">ENTRAR</button>
+            </form>
+            <a href="frontend/pages/createUser.html" id="createUserLink" class="create-user-link">Criar novo usuário</a>
+            <div class="school-info" id="schoolInfo"></div>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+            ? 'http://localhost:3000' 
+            : `https://${window.location.hostname}`;
+
+        // Extrair parâmetros da URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const selectedSchoolId = urlParams.get('school');
+        const selectedSchoolName = decodeURIComponent(urlParams.get('schoolName') || '');
+
+        // Carregar lista de escolas
+        async function loadSchools() {
+            try {
+                const response = await fetch(`${API_URL}/empresas`);
+                const schools = await response.json();
+                const select = document.getElementById('empresa');
+                
+                // Limpar opções anteriores (deixar apenas a padrão)
+                while (select.options.length > 1) {
+                    select.remove(1);
+                }
+                
+                schools.forEach(school => {
+                    const option = document.createElement('option');
+                    option.value = school.id;
+                    option.textContent = school.nome;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar escolas:', error);
+            }
+        }
+
+        // Inicializar página
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadSchools();
+
+            // Se uma escola foi selecionada, configurar
+            if (selectedSchoolId) {
+                document.getElementById('empresa').value = selectedSchoolId;
+                document.getElementById('schoolInfo').textContent = `Conectado em: ${selectedSchoolName}`;
+                document.getElementById('schoolSelectGroup').style.display = 'none';
+            } else {
+                // Mostrar o selector de escolas se não houver seleção prévia
+                document.getElementById('schoolSelectGroup').style.display = 'block';
+                document.getElementById('schoolInfo').textContent = '';
+            }
+        });
+
+        // Manipular submissão do formulário de login
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const empresaIdValue = document.getElementById('empresa').value;
+
+            if (!empresaIdValue) {
+                alert('Por favor, selecione uma escola');
+                return;
+            }
+
+            try {
+                const payload = {
+                    username,
+                    password,
+                    empresa_id: parseInt(empresaIdValue)
+                };
+
+                console.log('Enviando payload:', payload);
+
+                const response = await fetch(`${API_URL}/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+                console.log('Resposta do servidor:', response.status, data);
+
+                if (response.ok && data.token) {
+                    // Salvar token e redirecionar
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('role', data.role);
+                    localStorage.setItem('empresa_id', empresaIdValue);
+                    window.location.href = 'frontend/pages/occurrences.html';
+                } else {
+                    alert(data.message || data.error || 'Erro ao fazer login');
+                }
+            } catch (error) {
+                console.error('Erro na requisição:', error);
+                alert('Erro na conexão com o servidor');
+            }
+        });
+    </script>
+</body>
+</html>

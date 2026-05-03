@@ -13,7 +13,11 @@ const SECRET_KEY = 'your_secret_key';
 app.use(cors());
 app.use(bodyParser.json());
 
-// Servir arquivos estáticos do frontend
+// Servir arquivos estáticos da raiz do projeto
+const rootPath = path.join(__dirname, '..');
+app.use(express.static(rootPath));
+
+// Servir arquivos estáticos do frontend (para compatibilidade)
 const frontendPath = path.join(__dirname, '../frontend');
 app.use(express.static(frontendPath));
 
