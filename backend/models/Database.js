@@ -1,0 +1,86 @@
+// Database models and connection
+const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
+
+// Database connections
+const authDb = new sqlite3.Database(path.join(__dirname, 'auth.db'));
+const dataDb = new sqlite3.Database(path.join(__dirname, 'database.db'));
+
+// Initialize database tables
+authDb.serialize(() => {
+  authDb.run(`CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    email TEXT UNIQUE,
+    password TEXT NOT NULL,
+    empresa_id INTEGER,
+    role TEXT NOT NULL DEFAULT 'usuario',
+    status TEXT DEFAULT 'pendente',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
+
+  // Seed initial users
+  const hashedPassword = require('bcryptjs').hashSync('123', 10);
+
+  authDb.get("SELECT * FROM users WHERE username = 'Rafa.admin'", (err, row) => {
+    if (!row) {
+      authDb.run("INSERT INTO users (username, email, password, role, status) VALUES (?, ?, ?, 'super_admin', 'aprovado')",
+        ['Rafa.admin', 'admin@educadv.com', hashedPassword]);
+    }
+  });
+
+  authDb.get("SELECT * FROM users WHERE username = 'lucas.usuario'", (err, row) => {
+    if (!row) {
+      authDb.run("INSERT INTO users (username, email, password, empresa_id, role, status) VALUES (?, ?, ?, 1, 'usuario', 'aprovado')",
+        ['lucas.usuario', 'lucas@email.com', hashedPassword]);
+    }
+  });
+
+  authDb.get("SELECT * FROM users WHERE username = 'junior.usuario'", (err, row) => {
+    if (!row) {
+      authDb.run("INSERT INTO users (username, email, password, empresa_id, role, status) VALUES (?, ?, ?, 2, 'usuario', 'aprovado')",
+        ['junior.usuario', 'junior@email.com', hashedPassword]);
+    }
+  });
+
+  authDb.get("SELECT * FROM users WHERE username = 'maria.usuario'", (err, row) => {
+    if (!row) {
+      authDb.run("INSERT INTO users (username, email, password, empresa_id, role, status) VALUES (?, ?, ?, 3, 'usuario', 'aprovado')",
+        ['maria.usuario', 'maria@email.com', hashedPassword]);
+    }
+  });
+});
+
+dataDb.serialize(() => {
+  dataDb.run(`CREATE TABLE IF NOT EXISTS empresas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
+
+  dataDb.run(`CREATE TABLE IF NOT EXISTS ocorrencias (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    aluno TEXT NOT NULL,
+    turma TEXT NOT NULL,
+    descricao TEXT NOT NULL,
+    data TEXT NOT NULL,
+    hora TEXT NOT NULL,
+    empresa_id INTEGER NOT NULL,
+    created_by INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (empresa_id) REFERENCES empresas(id),
+    FOREIGN KEY (created_by) REFERENCES users(id)
+  )`);
+
+  // Seed companies
+  dataDb.get("SELECT COUNT(*) as count FROM empresas", (err, row) => {
+    if (!row || row.count == 0) {
+      dataDb.run("INSERT INTO empresas (nome) VALUES (?)", ['COLEGIO ADV DO CAMPO LIMPO']);
+      dataDb.run("INSERT INTO empresas (nome) VALUES (?)", ['COLEGIO ADV PIRAJUSSARA']);
+      dataDb.run("INSERT INTO empresas (nome) VALUES (?)", ['ESCOLA ADV DA ALVORADA']);
+    }
+  });
+});
+
+module.exports = { authDb, dataDb };

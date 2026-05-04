@@ -1,14 +1,16 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const sqlite3 = require('sqlite3').verbose();
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const path = require('path');
+
+// Import organized routes and models
+const AuthRoutes = require('./routes/AuthRoutes');
+const UsersRoutes = require('./routes/UsersRoutes');
+const IncidentsRoutes = require('./routes/IncidentsRoutes');
+require('./models/Database'); // Initialize database
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const SECRET_KEY = 'your_secret_key';
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -21,74 +23,21 @@ app.use(express.static(rootPath));
 const frontendPath = path.join(__dirname, '../frontend');
 app.use(express.static(frontendPath));
 
-// Database setup
+// API Routes (new organized structure)
+app.use('/api/auth', AuthRoutes);
+app.use('/api/users', UsersRoutes);
+app.use('/api/incidents', IncidentsRoutes);
+
+// Legacy routes for backward compatibility
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const sqlite3 = require('sqlite3').verbose();
+
+const SECRET_KEY = 'your_secret_key';
 const authDb = new sqlite3.Database(path.join(__dirname, 'auth.db'));
 const dataDb = new sqlite3.Database(path.join(__dirname, 'database.db'));
 
-// Create auth tables
-authDb.serialize(() => {
-  authDb.run(`CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL,
-    empresa_id INTEGER,
-    role TEXT NOT NULL,
-    status TEXT DEFAULT 'pendente'
-  )`);
-
-  authDb.get("SELECT * FROM users WHERE username = 'Rafa.admin'", (err, row) => {
-    if (!row) {
-      const hashedPassword = bcrypt.hashSync('123', 10);
-      authDb.run("INSERT INTO users (username, password, role, status) VALUES (?, ?, 'super_admin', 'aprovado')", ['Rafa.admin', hashedPassword]);
-    }
-  });
-
-  const hashedPassword = bcrypt.hashSync('123', 10);
-  authDb.get("SELECT * FROM users WHERE username = 'lucas.usuario'", (err, row) => {
-    if (!row) {
-      authDb.run("INSERT INTO users (username, password, empresa_id, role, status) VALUES (?, ?, 1, 'usuario', 'aprovado')", ['lucas.usuario', hashedPassword]);
-    }
-  });
-  authDb.get("SELECT * FROM users WHERE username = 'junior.usuario'", (err, row) => {
-    if (!row) {
-      authDb.run("INSERT INTO users (username, password, empresa_id, role, status) VALUES (?, ?, 2, 'usuario', 'aprovado')", ['junior.usuario', hashedPassword]);
-    }
-  });
-  authDb.get("SELECT * FROM users WHERE username = 'maria.usuario'", (err, row) => {
-    if (!row) {
-      authDb.run("INSERT INTO users (username, password, empresa_id, role, status) VALUES (?, ?, 3, 'usuario', 'aprovado')", ['maria.usuario', hashedPassword]);
-    }
-  });
-});
-
-// Create app data tables
-dataDb.serialize(() => {
-  dataDb.run(`CREATE TABLE IF NOT EXISTS empresas (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nome TEXT NOT NULL
-  )`);
-
-  dataDb.run(`CREATE TABLE IF NOT EXISTS ocorrencias (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    aluno TEXT NOT NULL,
-    turma TEXT NOT NULL,
-    descricao TEXT NOT NULL,
-    data TEXT NOT NULL,
-    hora TEXT NOT NULL,
-    empresa_id INTEGER NOT NULL,
-    FOREIGN KEY (empresa_id) REFERENCES empresas(id)
-  )`);
-
-  dataDb.get("SELECT COUNT(*) as count FROM empresas", (err, row) => {
-    if (!row || row.count == 0) {
-      dataDb.run("INSERT INTO empresas (nome) VALUES (?)", ['COLEGIO ADV DO CAMPO LIMPO']);
-      dataDb.run("INSERT INTO empresas (nome) VALUES (?)", ['COLEGIO ADV PIRAJUSSARA']);
-      dataDb.run("INSERT INTO empresas (nome) VALUES (?)", ['ESCOLA ADV DA ALVORADA']);
-    }
-  });
-});
-
-// Middleware to verify token
+// Middleware to verify token (legacy)
 function verifyToken(req, res, next) {
   const token = req.headers['authorization'];
   if (!token) return res.status(403).json({ error: 'Token required' });
@@ -99,7 +48,7 @@ function verifyToken(req, res, next) {
   });
 }
 
-// Routes
+// Legacy routes (keeping for compatibility)
 app.post('/login', (req, res) => {
   const { username, password, empresa_id } = req.body;
   authDb.get("SELECT * FROM users WHERE LOWER(username) = LOWER(?)", [username], (err, user) => {
@@ -296,7 +245,7 @@ app.get('/', (req, res) => {
 
 // Rota fallback para SPA - serve index.html para rotas não-API
 app.use((req, res, next) => {
-  if (!req.path.startsWith('/api') && !req.path.startsWith('/login') && !req.path.startsWith('/register') && 
+  if (!req.path.startsWith('/api') && !req.path.startsWith('/login') && !req.path.startsWith('/register') &&
       !req.path.startsWith('/createUser') && !req.path.startsWith('/users') && !req.path.startsWith('/empresa') &&
       !req.path.startsWith('/aprovar') && !req.path.startsWith('/recusar') && !req.path.startsWith('/promover') &&
       !req.path.startsWith('/rebaixar') && !req.path.startsWith('/ocorrencia') && !req.path.startsWith('/ocorrencias') &&

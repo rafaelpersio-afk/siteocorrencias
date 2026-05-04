@@ -5,7 +5,7 @@
 [![Express](https://img.shields.io/badge/Express-4.18+-lightgrey.svg)](https://expressjs.com/)
 [![JWT](https://img.shields.io/badge/JWT-Authentication-orange.svg)](https://jwt.io/)
 
-Um sistema web SaaS moderno para gerenciamento de ocorrências escolares, com autenticação multi-tenant por escola, roles de usuário (Super Admin, Admin, Usuário) e interface responsiva.
+Um sistema web SaaS moderno para gerenciamento de ocorrências escolares, com autenticação multi-tenant por escola, roles de usuário (Super Admin, Admin, Usuário) e interface responsiva com tema verde moderno.
 
 ## ✨ Funcionalidades
 
@@ -19,10 +19,17 @@ Um sistema web SaaS moderno para gerenciamento de ocorrências escolares, com au
 - Isolamento completo de dados por escola
 - Super admin acessa todas as escolas
 
+### 📊 Dashboard Moderno
+- **Cards Estatísticos**: Total de usuários, usuários pendentes/aprovados, total de ocorrências
+- **Gráfico Mensal**: Visualização de ocorrências por mês
+- **Sidebar Responsiva**: Navegação intuitiva com tema verde
+- **Interface Moderna**: Design clean com gradientes e animações
+
 ### 📝 Gerenciamento de Ocorrências
 - Criação de ocorrências com aluno, turma, descrição, data e hora
-- Visualização de ocorrências por escola
-- Histórico completo
+- Visualização organizada em cards
+- Histórico completo com filtros
+- Validação de formulários
 
 ### 🔐 Segurança
 - Autenticação JWT
@@ -33,7 +40,8 @@ Um sistema web SaaS moderno para gerenciamento de ocorrências escolares, com au
 ## 🛠️ Tecnologias Utilizadas
 
 - **Backend**: Node.js, Express.js, SQLite3, JWT, bcryptjs, CORS
-- **Frontend**: HTML5, CSS3, JavaScript (Vanilla)
+- **Frontend**: HTML5, CSS3, JavaScript (Vanilla), FontAwesome Icons
+- **Arquitetura**: MVC organizada (Routes, Controllers, Models)
 - **Banco de Dados**: SQLite (arquivo local)
 - **Deploy**: Render (Node.js web service)
 
@@ -69,24 +77,85 @@ Um sistema web SaaS moderno para gerenciamento de ocorrências escolares, com au
 | Rafa.admin | 123 | Super Admin | Todas |
 | lucas.usuario | 123 | Usuário | COLEGIO ADV DO CAMPO LIMPO |
 | junior.usuario | 123 | Usuário | COLEGIO ADV PIRAJUSSARA |
+| maria.usuario | 123 | Usuário | ESCOLA ADV DA ALVORADA |
 
 ## 📁 Estrutura do Projeto
 
 ```
 siteocorrencias/
 ├── backend/
-│   ├── server.js          # Servidor principal
-│   ├── auth.db           # Banco de autenticação
-│   └── database.db       # Banco de dados app
+│   ├── server.js              # Servidor principal (organizado)
+│   ├── models/               # Modelos de dados
+│   │   ├── Database.js       # Conexões e inicialização DB
+│   │   ├── User.js           # Modelo de usuário
+│   │   └── Incident.js       # Modelo de ocorrência
+│   ├── controllers/          # Controladores da API
+│   │   ├── AuthController.js
+│   │   ├── UsersController.js
+│   │   └── IncidentsController.js
+│   ├── routes/               # Rotas da API
+│   │   ├── AuthRoutes.js
+│   │   ├── UsersRoutes.js
+│   │   └── IncidentsRoutes.js
+│   ├── middleware/           # Middlewares
+│   │   └── auth.js           # Autenticação JWT
+│   ├── auth.db              # Banco de autenticação
+│   └── database.db          # Banco de dados app
 ├── frontend/
-│   ├── index.html        # Página de login
-│   ├── pages/            # Páginas do sistema
-│   ├── js/               # Scripts JavaScript
-│   └── css/              # Estilos CSS
-├── package.json          # Configurações Node.js
-├── render.yaml           # Configuração Render
-└── README.md             # Este arquivo
+│   ├── index.html           # Seleção de escola
+│   ├── login.html           # Página de login
+│   ├── pages/
+│   │   └── dashboard.html   # Dashboard moderno
+│   ├── components/          # Componentes reutilizáveis
+│   │   ├── Sidebar.js       # Sidebar responsiva
+│   │   ├── DashboardCards.js # Cards estatísticos
+│   │   └── MonthlyChart.js  # Gráfico mensal
+│   ├── js/
+│   │   ├── login.js         # Lógica de login
+│   │   └── dashboard.js     # Lógica do dashboard
+│   ├── css/
+│   │   └── styles.css       # Estilos modernos (tema verde)
+│   └── assets/              # Recursos estáticos
+├── package.json             # Configurações Node.js
+├── render.yaml              # Configuração Render
+└── README.md                # Este arquivo
 ```
+
+## 🔄 API Endpoints
+
+### Autenticação
+- `POST /api/auth/login` - Login de usuário
+- `POST /api/auth/register` - Registro de novo usuário
+
+### Usuários
+- `GET /api/users` - Listar usuários (com paginação)
+- `POST /api/users` - Criar usuário
+- `PUT /api/users/:id/status` - Atualizar status do usuário
+- `PUT /api/users/:id/role` - Atualizar role do usuário
+
+### Ocorrências
+- `GET /api/incidents` - Listar ocorrências (com filtros)
+- `POST /api/incidents` - Criar ocorrência
+- `GET /api/incidents/stats` - Estatísticas mensais
+
+### Compatibilidade (Legacy)
+- Todas as rotas antigas continuam funcionando para compatibilidade
+
+## 🎨 Design System
+
+### Tema Verde Moderno
+- **Primary**: #198754 (Verde Bootstrap)
+- **Secondary**: #0f5132 (Verde escuro)
+- **Accent**: #fd7e14 (Laranja)
+- **Background**: Gradiente verde claro
+- **Cards**: Branco com sombras suaves
+
+### Componentes
+- **Sidebar**: Navegação lateral responsiva
+- **Cards**: Estatísticas com ícones e cores
+- **Charts**: Gráficos simples em CSS
+- **Forms**: Validação e UX moderna
+- **Tables**: Tabelas responsivas
 
 ## 🌐 Deploy Online
 
