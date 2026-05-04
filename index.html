@@ -48,7 +48,7 @@
         async function loadSchools() {
             try {
                 console.log('Carregando escolas...');
-                const response = await fetch(`${API_URL}/empresas`);
+                const response = await fetch(`${API_URL}/api/empresas`);
 
                 if (!response.ok) {
                     throw new Error(`Erro HTTP: ${response.status}`);

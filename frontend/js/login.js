@@ -10,8 +10,8 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function fetchEmpresas() {
-    console.log('Buscando empresas de:', `${API_URL}/empresas`);
-    fetch(`${API_URL}/empresas`)
+    console.log('Buscando empresas de:', `${API_URL}/api/empresas`);
+    fetch(`${API_URL}/api/empresas`)
         .then(response => {
             console.log('Resposta empresas:', response.status);
             return response.json();

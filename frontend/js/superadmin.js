@@ -127,7 +127,7 @@ function getAuthHeaders() {
 
 async function loadEscolas() {
     try {
-        const response = await fetch(`${API_URL}/empresas`);
+        const response = await fetch(`${API_URL}/api/empresas`);
 
         if (!response.ok) throw new Error('Failed to load empresas');
 
@@ -171,7 +171,7 @@ function renderEscolas(data) {
 
 async function loadEmpresasSelect() {
     try {
-        const response = await fetch(`${API_URL}/empresas`);
+        const response = await fetch(`${API_URL}/api/empresas`);
 
         if (!response.ok) throw new Error('Failed to load empresas');
 
@@ -252,7 +252,7 @@ function renderAllUsers(data) {
 
 async function loadSchoolSelect() {
     try {
-        const response = await fetch(`${API_URL}/empresas`);
+        const response = await fetch(`${API_URL}/api/empresas`);
 
         if (!response.ok) throw new Error('Failed to load empresas');
 
@@ -427,7 +427,7 @@ async function excluirEscola(escolaId, escolaNome) {
     }
 
     try {
-        const response = await fetch(`${API_URL}/empresas/${escolaId}`, {
+        const response = await fetch(`${API_URL}/api/empresas/${escolaId}`, {
             method: 'DELETE',
             headers: getAuthHeaders()
         });

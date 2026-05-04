@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function fetchEmpresas() {
-    fetch(`${API_URL}/empresas`)
+    fetch(`${API_URL}/api/empresas`)
         .then(response => response.json())
         .then(data => {
             const select = document.getElementById('empresa');

@@ -246,7 +246,7 @@ function renderUsers(users) {
 
 async function loadSchools() {
     try {
-        const response = await fetch(`${API_URL}/empresas`);
+        const response = await fetch(`${API_URL}/api/empresas`);
         if (!response.ok) throw new Error('Failed to load schools');
 
         const schools = await response.json();
