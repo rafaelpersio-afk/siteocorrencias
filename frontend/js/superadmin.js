@@ -69,7 +69,6 @@ async function initializeSuperAdmin() {
         await loadEscolas();
         await loadEmpresasSelect();
         await loadAllUsers();
-        await loadPromoteSchools();
 
         // Listen for sidebar navigation
         document.addEventListener('sidebarNavigate', handleNavigation);
@@ -554,7 +553,6 @@ function criarEscola() {
         document.getElementById('nomeEscola').value = '';
         loadEscolas();
         loadEmpresasSelect();
-        loadPromoteSchools();
     })
     .catch(error => {
         console.error('Erro:', error);

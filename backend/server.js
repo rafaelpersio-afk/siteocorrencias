@@ -239,6 +239,38 @@ app.get('/ocorrencias', verifyToken, (req, res) => {
   });
 });
 
+app.get('/ocorrencias/:id', verifyToken, (req, res) => {
+  const { id } = req.params;
+  const empresa_id = req.user.empresa_id;
+  dataDb.get("SELECT * FROM ocorrencias WHERE id = ? AND empresa_id = ?", [id, empresa_id], (err, row) => {
+    if (err) return res.status(400).json({ error: 'Erro ao buscar ocorrência' });
+    if (!row) return res.status(404).json({ error: 'Ocorrência não encontrada' });
+    res.json(row);
+  });
+});
+
+app.put('/ocorrencias/:id', verifyToken, (req, res) => {
+  const { id } = req.params;
+  const { aluno, turma, descricao, data, hora } = req.body;
+  const empresa_id = req.user.empresa_id;
+  dataDb.run("UPDATE ocorrencias SET aluno = ?, turma = ?, descricao = ?, data = ?, hora = ? WHERE id = ? AND empresa_id = ?", 
+    [aluno, turma, descricao, data, hora, id, empresa_id], function(err) {
+    if (err) return res.status(400).json({ error: 'Erro ao atualizar ocorrência' });
+    if (this.changes === 0) return res.status(404).json({ error: 'Ocorrência não encontrada' });
+    res.json({ message: 'Ocorrência atualizada' });
+  });
+});
+
+app.delete('/ocorrencias/:id', verifyToken, (req, res) => {
+  const { id } = req.params;
+  const empresa_id = req.user.empresa_id;
+  dataDb.run("DELETE FROM ocorrencias WHERE id = ? AND empresa_id = ?", [id, empresa_id], function(err) {
+    if (err) return res.status(400).json({ error: 'Erro ao excluir ocorrência' });
+    if (this.changes === 0) return res.status(404).json({ error: 'Ocorrência não encontrada' });
+    res.json({ message: 'Ocorrência excluída' });
+  });
+});
+
 app.get('/empresas', (req, res) => {
   dataDb.all("SELECT * FROM empresas", (err, rows) => {
     if (err) return res.status(400).json({ error: 'Erro ao buscar empresas' });

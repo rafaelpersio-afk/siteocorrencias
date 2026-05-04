@@ -4,9 +4,6 @@ const { verifyToken } = require('../middleware/auth');
 
 const router = express.Router();
 
-// All routes require authentication
-router.use(verifyToken);
-
 // Mock data for companies (in a real app, this would be in a controller)
 const companies = [
   { id: 1, nome: 'Escola Municipal João Paulo II' },
@@ -14,15 +11,13 @@ const companies = [
   { id: 3, nome: 'Escola Particular Santo Antônio' }
 ];
 
-// GET /api/empresas
+// GET /api/empresas - Public route for login
 router.get('/', (req, res) => {
-  // Only super_admin can see all companies
-  if (req.user.role !== 'super_admin') {
-    return res.status(403).json({ error: 'Acesso negado' });
-  }
-
   res.json(companies);
 });
+
+// All routes below require authentication
+router.use(verifyToken);
 
 // DELETE /api/empresas/:id
 router.delete('/:id', (req, res) => {

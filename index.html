@@ -30,7 +30,6 @@
                 <button type="submit" class="btn-login">ENTRAR</button>
             </form>
             <a href="frontend/pages/createUser.html" id="createUserLink" class="create-user-link">Criar novo usuário</a>
-            <div class="school-info" id="schoolInfo"></div>
         </div>
     </div>
     
@@ -88,14 +87,13 @@
             }
         }
 
-        // Inicializar página
-        document.addEventListener('DOMContentLoaded', async () => {
-            console.log('Página carregada, inicializando...');
-            await loadSchools();
+    // Inicializar página
+    document.addEventListener('DOMContentLoaded', async () => {
+        console.log('Página carregada, inicializando...');
+        await loadSchools();
 
-            // Sempre mostrar o selector de escolas
-            document.getElementById('schoolInfo').textContent = 'Selecione sua unidade escolar para continuar';
-        });
+        // Sempre mostrar o selector de escolas
+    });
 
         // Manipular submissão do formulário de login
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -116,7 +114,8 @@
                 return;
             }
 
-            if (!empresaIdValue) {
+            // Validar escola apenas se não for usuário master (Rafa.admin)
+            if (username !== 'Rafa.admin' && !empresaIdValue) {
                 alert('Por favor, selecione uma unidade escolar');
                 return;
             }
@@ -125,7 +124,7 @@
                 const payload = {
                     username,
                     password,
-                    empresa_id: parseInt(empresaIdValue)
+                    empresa_id: empresaIdValue ? parseInt(empresaIdValue) : null
                 };
 
                 console.log('Enviando payload:', payload);
