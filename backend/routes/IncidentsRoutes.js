@@ -17,4 +17,10 @@ router.post('/', IncidentsController.createIncident);
 // GET /api/incidents/stats
 router.get('/stats', IncidentsController.getIncidentStats);
 
+// PUT /api/incidents/:id
+router.put('/:id', IncidentsController.updateIncident);
+
+// DELETE /api/incidents/:id
+router.delete('/:id', IncidentsController.deleteIncident);
+
 module.exports = router;

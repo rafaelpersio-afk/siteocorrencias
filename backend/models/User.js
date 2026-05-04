@@ -134,6 +134,15 @@ class User {
   static validatePassword(password, hash) {
     return bcrypt.compareSync(password, hash);
   }
+
+  static async resetIncidentTotals() {
+    return new Promise((resolve, reject) => {
+      dataDb.run("UPDATE users SET incident_count = 0", [], function(err) {
+        if (err) reject(err);
+        else resolve({ changes: this.changes });
+      });
+    });
+  }
 }
 
 module.exports = User;

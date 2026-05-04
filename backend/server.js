@@ -7,6 +7,7 @@ const path = require('path');
 const AuthRoutes = require('./routes/AuthRoutes');
 const UsersRoutes = require('./routes/UsersRoutes');
 const IncidentsRoutes = require('./routes/IncidentsRoutes');
+const CompaniesRoutes = require('./routes/CompaniesRoutes');
 require('./models/Database'); // Initialize database
 
 const app = express();
@@ -27,6 +28,7 @@ app.use(express.static(frontendPath));
 app.use('/api/auth', AuthRoutes);
 app.use('/api/users', UsersRoutes);
 app.use('/api/incidents', IncidentsRoutes);
+app.use('/api/empresas', CompaniesRoutes);
 
 // Legacy routes for backward compatibility
 const jwt = require('jsonwebtoken');

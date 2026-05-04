@@ -113,6 +113,48 @@
         </div>
     </div>
 
+    <!-- Edit Incident Modal -->
+    <div id="edit-incident-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit"></i> Editar Ocorrência</h3>
+                <span class="close" onclick="closeEditModal()">&times;</span>
+            </div>
+            <form id="edit-incident-form">
+                <div class="form-row">
+                    <div class="input-group">
+                        <label for="edit-aluno">Nome do Aluno</label>
+                        <input type="text" id="edit-aluno" name="aluno" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="edit-turma">Turma</label>
+                        <input type="text" id="edit-turma" name="turma" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="input-group">
+                        <label for="edit-descricao">Descrição da Ocorrência</label>
+                        <textarea id="edit-descricao" name="descricao" rows="4" required></textarea>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="input-group">
+                        <label for="edit-data">Data</label>
+                        <input type="date" id="edit-data" name="data" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="edit-hora">Hora</label>
+                        <input type="time" id="edit-hora" name="hora" required>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancelar</button>
+                    <button type="submit" class="btn">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Components -->
     <script src="../components/Sidebar.js"></script>
     <script src="../components/DashboardCards.js"></script>

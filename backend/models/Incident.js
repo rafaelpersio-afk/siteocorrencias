@@ -116,6 +116,37 @@ class Incident {
       });
     });
   }
+
+  static async update(id, data) {
+    return new Promise((resolve, reject) => {
+      const { aluno, turma, descricao, data: incidentData, hora } = data;
+
+      dataDb.run(
+        `UPDATE ocorrencias SET
+          aluno = ?,
+          turma = ?,
+          descricao = ?,
+          data = ?,
+          hora = ?,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?`,
+        [aluno, turma, descricao, incidentData, hora, id],
+        function(err) {
+          if (err) reject(err);
+          else resolve({ id, changes: this.changes });
+        }
+      );
+    });
+  }
+
+  static async delete(id) {
+    return new Promise((resolve, reject) => {
+      dataDb.run("DELETE FROM ocorrencias WHERE id = ?", [id], function(err) {
+        if (err) reject(err);
+        else resolve({ id, changes: this.changes });
+      });
+    });
+  }
 }
 
 module.exports = Incident;

@@ -29,6 +29,42 @@ async function initializeSuperAdmin() {
         const cardsContainer = document.getElementById('dashboard-cards');
         dashboardCards = new DashboardCards(cardsContainer);
 
+        // Add edit incident form listener
+        document.getElementById('edit-incident-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const incidentId = e.target.dataset.incidentId;
+
+            const incidentData = {
+                aluno: formData.get('aluno'),
+                turma: formData.get('turma'),
+                descricao: formData.get('descricao'),
+                data: formData.get('data'),
+                hora: formData.get('hora')
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/ocorrencias/${incidentId}`, {
+                    method: 'PUT',
+                    headers: {
+                        ...getAuthHeaders(),
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(incidentData)
+                });
+
+                if (!response.ok) throw new Error('Failed to update incident');
+
+                showSuccess('Ocorrência atualizada com sucesso!');
+                closeEditModal();
+                await loadSchoolIncidents();
+            } catch (error) {
+                console.error('Error updating incident:', error);
+                showError('Erro ao atualizar ocorrência');
+            }
+        });
+
         // Load initial data
         await loadEscolas();
         await loadEmpresasSelect();
@@ -55,6 +91,10 @@ async function handleNavigation(event) {
         case 'schools':
             showSection('schools-section');
             await loadEscolas();
+            break;
+        case 'view-schools':
+            showSection('view-schools-section');
+            await loadSchoolSelect();
             break;
         case 'users':
             showSection('create-user-section');
@@ -115,8 +155,16 @@ function renderEscolas(data) {
 
     container.innerHTML = data.map(escola => `
         <div class="escola-item">
-            <i class="fas fa-school"></i>
-            <strong>${escola.nome}</strong> (ID: ${escola.id})
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <i class="fas fa-school"></i>
+                    <strong>${escola.nome}</strong> (ID: ${escola.id})
+                </div>
+                <button class="btn btn-danger btn-sm" onclick="excluirEscola(${escola.id}, '${escola.nome}')">
+                    <i class="fas fa-trash"></i>
+                    Excluir
+                </button>
+            </div>
         </div>
     `).join('');
 }
@@ -202,7 +250,7 @@ function renderAllUsers(data) {
     });
 }
 
-async function loadPromoteSchools() {
+async function loadSchoolSelect() {
     try {
         const response = await fetch(`${API_URL}/empresas`);
 
@@ -210,7 +258,7 @@ async function loadPromoteSchools() {
 
         const data = await response.json();
 
-        const select = document.getElementById('promoteSchool');
+        const select = document.getElementById('schoolSelect');
         select.innerHTML = '<option value="">Selecione uma escola</option>';
 
         data.forEach(escola => {
@@ -220,8 +268,84 @@ async function loadPromoteSchools() {
             select.appendChild(option);
         });
     } catch (error) {
-        console.error('Error loading promote schools:', error);
+        console.error('Error loading school select:', error);
     }
+}
+
+async function loadSchoolIncidents() {
+    const schoolId = document.getElementById('schoolSelect').value;
+    if (!schoolId) {
+        document.getElementById('school-incidents-list').innerHTML = '';
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/ocorrencias?empresa_id=${schoolId}`, {
+            headers: getAuthHeaders()
+        });
+
+        if (!response.ok) throw new Error('Failed to load school incidents');
+
+        const data = await response.json();
+        renderSchoolIncidents(data);
+    } catch (error) {
+        console.error('Error loading school incidents:', error);
+        showError('Erro ao carregar ocorrências da escola');
+    }
+}
+
+function renderSchoolIncidents(data) {
+    const container = document.getElementById('school-incidents-list');
+
+    if (!data || data.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h4>Nenhuma ocorrência encontrada</h4>
+                <p>Esta escola não possui ocorrências registradas.</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = `
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Aluno</th>
+                    <th>Turma</th>
+                    <th>Descrição</th>
+                    <th>Data/Hora</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="schoolIncidentsTable"></tbody>
+        </table>
+    `;
+
+    const tbody = document.getElementById('schoolIncidentsTable');
+    tbody.innerHTML = '';
+
+    data.forEach(incident => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><strong>${incident.aluno}</strong></td>
+            <td>${incident.turma}</td>
+            <td>${incident.descricao}</td>
+            <td>${formatDate(incident.data)} ${incident.hora}</td>
+            <td>
+                <button class="btn btn-sm" onclick="editarIncidente(${incident.id})">
+                    <i class="fas fa-edit"></i>
+                    Editar
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="excluirIncidente(${incident.id})">
+                    <i class="fas fa-trash"></i>
+                    Excluir
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
 }
 
 async function loadUsersBySchool() {
@@ -295,6 +419,108 @@ function renderPromoteUsers(data) {
 function showError(message) {
     // Simple error display
     alert(message);
+}
+
+async function excluirEscola(escolaId, escolaNome) {
+    if (!confirm(`Tem certeza que deseja excluir a escola "${escolaNome}"? Esta ação não pode ser desfeita.`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/empresas/${escolaId}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        });
+
+        if (!response.ok) throw new Error('Failed to delete escola');
+
+        showSuccess('Escola excluída com sucesso!');
+        await loadEscolas();
+    } catch (error) {
+        console.error('Error deleting escola:', error);
+        showError('Erro ao excluir escola');
+    }
+}
+
+async function editarIncidente(incidentId) {
+    try {
+        const response = await fetch(`${API_URL}/ocorrencias/${incidentId}`, {
+            headers: getAuthHeaders()
+        });
+
+        if (!response.ok) throw new Error('Failed to load incident');
+
+        const incident = await response.json();
+
+        // Preencher o formulário de edição
+        document.getElementById('edit-aluno').value = incident.aluno;
+        document.getElementById('edit-turma').value = incident.turma;
+        document.getElementById('edit-descricao').value = incident.descricao;
+        document.getElementById('edit-data').value = incident.data;
+        document.getElementById('edit-hora').value = incident.hora;
+
+        // Armazenar o ID da ocorrência sendo editada
+        document.getElementById('edit-incident-form').dataset.incidentId = incidentId;
+
+        // Mostrar o modal
+        document.getElementById('edit-incident-modal').style.display = 'block';
+    } catch (error) {
+        console.error('Error loading incident for edit:', error);
+        showError('Erro ao carregar ocorrência para edição');
+    }
+}
+
+function closeEditModal() {
+    document.getElementById('edit-incident-modal').style.display = 'none';
+    document.getElementById('edit-incident-form').reset();
+}
+
+async function excluirIncidente(incidentId) {
+    if (!confirm('Tem certeza que deseja excluir esta ocorrência? Esta ação não pode ser desfeita.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/ocorrencias/${incidentId}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        });
+
+        if (!response.ok) throw new Error('Failed to delete incident');
+
+        showSuccess('Ocorrência excluída com sucesso!');
+        await loadSchoolIncidents();
+    } catch (error) {
+        console.error('Error deleting incident:', error);
+        showError('Erro ao excluir ocorrência');
+    }
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR');
+}
+
+async function resetIncidentTotals() {
+    if (!confirm('Tem certeza que deseja zerar o total de ocorrências de TODOS os usuários? Esta ação não pode ser desfeita.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/users/reset-incident-totals`, {
+            method: 'POST',
+            headers: getAuthHeaders()
+        });
+
+        if (!response.ok) throw new Error('Failed to reset incident totals');
+
+        showSuccess('Total de ocorrências zerado para todos os usuários!');
+        // Reload dashboard data to reflect changes
+        loadDashboardData();
+    } catch (error) {
+        console.error('Error resetting incident totals:', error);
+        showError('Erro ao zerar total de ocorrências');
+    }
 }
 
 // Legacy functions for backward compatibility

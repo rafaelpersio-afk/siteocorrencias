@@ -20,4 +20,7 @@ router.put('/:id/status', UsersController.updateUserStatus);
 // PUT /api/users/:id/role
 router.put('/:id/role', UsersController.updateUserRole);
 
+// POST /api/users/reset-incident-totals
+router.post('/reset-incident-totals', UsersController.resetIncidentTotals);
+
 module.exports = router;

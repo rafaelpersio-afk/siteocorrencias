@@ -87,6 +87,90 @@ class IncidentsController {
       res.status(500).json({ error: 'Erro ao buscar estatísticas' });
     }
   }
+
+  static async updateIncident(req, res) {
+    try {
+      const { id } = req.params;
+      const { aluno, turma, descricao, data, hora } = req.body;
+      const userId = req.user.id;
+
+      // Validate required fields
+      if (!aluno || !turma || !descricao || !data || !hora) {
+        return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
+      }
+
+      // Get user to determine empresa_id
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'Usuário não encontrado' });
+      }
+
+      // Check if incident exists and belongs to user's empresa
+      const incident = await Incident.findById(id);
+      if (!incident) {
+        return res.status(404).json({ error: 'Ocorrência não encontrada' });
+      }
+
+      // Check permissions: user can edit their own incidents, admin can edit all incidents in their empresa
+      if (req.user.role !== 'super_admin' && req.user.role !== 'admin' && incident.user_id !== userId) {
+        return res.status(403).json({ error: 'Você não tem permissão para editar esta ocorrência' });
+      }
+
+      if (req.user.role !== 'super_admin' && incident.empresa_id !== user.empresa_id) {
+        return res.status(403).json({ error: 'Você não tem permissão para editar ocorrências de outras empresas' });
+      }
+
+      // Update incident
+      await Incident.update(id, {
+        aluno,
+        turma,
+        descricao,
+        data,
+        hora
+      });
+
+      res.json({ message: 'Ocorrência atualizada com sucesso' });
+    } catch (error) {
+      console.error('Update incident error:', error);
+      res.status(500).json({ error: 'Erro ao atualizar ocorrência' });
+    }
+  }
+
+  static async deleteIncident(req, res) {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+
+      // Get user to determine empresa_id
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'Usuário não encontrado' });
+      }
+
+      // Check if incident exists and belongs to user's empresa
+      const incident = await Incident.findById(id);
+      if (!incident) {
+        return res.status(404).json({ error: 'Ocorrência não encontrada' });
+      }
+
+      // Check permissions: user can delete their own incidents, admin can delete all incidents in their empresa
+      if (req.user.role !== 'super_admin' && req.user.role !== 'admin' && incident.user_id !== userId) {
+        return res.status(403).json({ error: 'Você não tem permissão para excluir esta ocorrência' });
+      }
+
+      if (req.user.role !== 'super_admin' && incident.empresa_id !== user.empresa_id) {
+        return res.status(403).json({ error: 'Você não tem permissão para excluir ocorrências de outras empresas' });
+      }
+
+      // Delete incident
+      await Incident.delete(id);
+
+      res.json({ message: 'Ocorrência excluída com sucesso' });
+    } catch (error) {
+      console.error('Delete incident error:', error);
+      res.status(500).json({ error: 'Erro ao excluir ocorrência' });
+    }
+  }
 }
 
 module.exports = IncidentsController;

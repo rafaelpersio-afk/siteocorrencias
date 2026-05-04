@@ -37,6 +37,42 @@ async function initializeAdmin() {
         // Listen for sidebar navigation
         document.addEventListener('sidebarNavigate', handleNavigation);
 
+        // Add edit incident form listener
+        document.getElementById('edit-incident-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const incidentId = e.target.dataset.incidentId;
+
+            const incidentData = {
+                aluno: formData.get('aluno'),
+                turma: formData.get('turma'),
+                descricao: formData.get('descricao'),
+                data: formData.get('data'),
+                hora: formData.get('hora')
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/ocorrencias/${incidentId}`, {
+                    method: 'PUT',
+                    headers: {
+                        ...getAuthHeaders(),
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(incidentData)
+                });
+
+                if (!response.ok) throw new Error('Failed to update incident');
+
+                alert('Ocorrência atualizada com sucesso!');
+                closeEditModal();
+                await loadOcorrencias();
+            } catch (error) {
+                console.error('Error updating incident:', error);
+                alert('Erro ao atualizar ocorrência');
+            }
+        });
+
     } catch (error) {
         console.error('Error initializing admin:', error);
         logout();
@@ -264,6 +300,16 @@ function renderOcorrencias(data) {
                         <span><i class="fas fa-clock"></i> ${ocorrencia.hora}</span>
                     </div>
                 </div>
+                <div class="incident-actions">
+                    <button class="btn btn-sm" onclick="editarIncidente(${ocorrencia.id})">
+                        <i class="fas fa-edit"></i>
+                        Editar
+                    </button>
+                    <button class="btn btn-danger btn-sm" onclick="excluirIncidente(${ocorrencia.id})">
+                        <i class="fas fa-trash"></i>
+                        Excluir
+                    </button>
+                </div>
             </div>
             <div class="incident-description">${ocorrencia.descricao}</div>
             <div class="incident-date">Criado em ${formatDateTime(ocorrencia.created_at || new Date().toISOString())}</div>
@@ -401,6 +447,60 @@ async function createIncident(event) {
         console.error('Error creating incident:', error);
         alert('Erro ao criar ocorrência');
     }
+}
+
+async function editarIncidente(incidentId) {
+    try {
+        const response = await fetch(`${API_URL}/ocorrencias/${incidentId}`, {
+            headers: getAuthHeaders()
+        });
+
+        if (!response.ok) throw new Error('Failed to load incident');
+
+        const incident = await response.json();
+
+        // Preencher o formulário de edição
+        document.getElementById('edit-aluno').value = incident.aluno;
+        document.getElementById('edit-turma').value = incident.turma;
+        document.getElementById('edit-descricao').value = incident.descricao;
+        document.getElementById('edit-data').value = incident.data;
+        document.getElementById('edit-hora').value = incident.hora;
+
+        // Armazenar o ID da ocorrência sendo editada
+        document.getElementById('edit-incident-form').dataset.incidentId = incidentId;
+
+        // Mostrar o modal
+        document.getElementById('edit-incident-modal').style.display = 'block';
+    } catch (error) {
+        console.error('Error loading incident for edit:', error);
+        alert('Erro ao carregar ocorrência para edição');
+    }
+}
+
+async function excluirIncidente(incidentId) {
+    if (!confirm('Tem certeza que deseja excluir esta ocorrência? Esta ação não pode ser desfeita.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/ocorrencias/${incidentId}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        });
+
+        if (!response.ok) throw new Error('Failed to delete incident');
+
+        alert('Ocorrência excluída com sucesso!');
+        await loadOcorrencias();
+    } catch (error) {
+        console.error('Error deleting incident:', error);
+        alert('Erro ao excluir ocorrência');
+    }
+}
+
+function closeEditModal() {
+    document.getElementById('edit-incident-modal').style.display = 'none';
+    document.getElementById('edit-incident-form').reset();
 }
 
 function logout() {

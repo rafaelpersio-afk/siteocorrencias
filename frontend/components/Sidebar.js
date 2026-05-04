@@ -63,7 +63,8 @@ class Sidebar {
 
     if (this.user.role === 'super_admin') {
       baseItems.push(
-        { id: 'schools', label: 'Gerenciar Escolas', icon: 'fas fa-building' }
+        { id: 'schools', label: 'Gerenciar Escolas', icon: 'fas fa-building' },
+        { id: 'view-schools', label: 'Escolas', icon: 'fas fa-eye' }
       );
     }
 

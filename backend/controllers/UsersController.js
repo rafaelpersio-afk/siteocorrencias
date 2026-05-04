@@ -101,6 +101,23 @@ class UsersController {
       res.status(500).json({ error: 'Erro ao criar usuário' });
     }
   }
+
+  static async resetIncidentTotals(req, res) {
+    try {
+      // Only super_admin can reset incident totals
+      if (req.user.role !== 'super_admin') {
+        return res.status(403).json({ error: 'Acesso negado' });
+      }
+
+      // Reset incident totals for all users
+      await User.resetIncidentTotals();
+
+      res.json({ message: 'Total de ocorrências zerado para todos os usuários' });
+    } catch (error) {
+      console.error('Reset incident totals error:', error);
+      res.status(500).json({ error: 'Erro ao zerar total de ocorrências' });
+    }
+  }
 }
 
 module.exports = UsersController;
