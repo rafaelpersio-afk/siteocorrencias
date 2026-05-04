@@ -6,114 +6,113 @@
     <title>Super Admin - Sistema de Ocorrências</title>
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        .tabs {
-            display: flex;
-            border-bottom: 1px solid #dee2e6;
-            margin-bottom: 20px;
-        }
-        .tab-button {
-            padding: 10px 20px;
-            background: #f8f9fa;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        .tab-button.active {
-            background: #198754;
-            color: #ffffff;
-        }
-        .tab-button:hover {
-            background: #157347;
-            color: #ffffff;
-        }
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-        }
-        .escolas-scroll {
-            max-height: 400px;
-            overflow-y: auto;
-            border: 1px solid #dee2e6;
-            border-radius: 4px;
-            padding: 15px;
-            margin-top: 15px;
-        }
-        .escola-item {
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 4px;
-            margin-bottom: 10px;
-            border-left: 4px solid #198754;
-        }
-    </style>
 </head>
 <body>
-    <div class="main-content">
-        <div class="topbar">
-            <h1>Dashboard Super Admin</h1>
-            <button class="btn" onclick="logout()" style="margin-left: auto;">Sair</button>
-        </div>
-        <div class="tabs">
-            <button class="tab-button active" onclick="showTab('empresas', event)">Gerenciar Escolas</button>
-            <button class="tab-button" onclick="showTab('users', event)">Gerenciar Usuários</button>
-            <button class="tab-button" onclick="showTab('allUsers', event)">Usuários Criados</button>
-            <button class="tab-button" onclick="showTab('promover', event)">Promover/Rebaixar</button>
-        </div>
-        <div id="empresas" class="tab-content active card">
-            <h3><i class="fas fa-building"></i> Criar Nova Escola</h3>
-            <input type="text" id="nomeEscola" placeholder="Nome da Escola">
-            <button class="btn" onclick="criarEscola()">Criar Escola</button>
-            <h4 style="margin-top: 30px;"><i class="fas fa-list"></i> Escolas Registradas</h4>
-            <div class="escolas-scroll" id="escolasList"></div>
-        </div>
-        <div id="users" class="tab-content card">
-            <h3><i class="fas fa-users"></i> Criar Novo Usuário</h3>
-            <input type="text" id="username" placeholder="Username">
-            <input type="password" id="password" placeholder="Senha">
-            <select id="role">
-                <option value="admin">Admin</option>
-                <option value="usuario">Usuário</option>
-            </select>
-            <select id="empresa_id"></select>
-            <button class="btn" onclick="criarUsuario()">Criar Usuário</button>
-        </div>
-        <div id="allUsers" class="tab-content card">
-            <h3><i class="fas fa-list"></i> Usuários Criados</h3>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Username</th>
-                        <th>Escola</th>
-                        <th>Role</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="allUsersTable"></tbody>
-            </table>
-        </div>
-        <div id="promover" class="tab-content card">
-            <h3><i class="fas fa-user-exchange"></i> Promover / Rebaixar Usuário</h3>
-            <div class="input-group">
-                <label for="promoteSchool"><i class="fas fa-building"></i> Selecionar Escola</label>
-                <select id="promoteSchool" onchange="loadUsersBySchool()"></select>
+    <div class="app-layout">
+        <!-- Sidebar will be inserted here by JavaScript -->
+        <div id="sidebar-container"></div>
+
+        <div class="main-content">
+            <div class="content-wrapper">
+                <!-- Dashboard Cards will be inserted here -->
+                <div id="dashboard-cards"></div>
+
+                <!-- Content sections -->
+                <div id="content-sections">
+                    <!-- Gerenciar Escolas section -->
+                    <div id="schools-section" class="content-section">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-building"></i> Gerenciar Escolas</h3>
+                            </div>
+                            <div class="form-row">
+                                <div class="input-group">
+                                    <label for="nomeEscola">Nome da Nova Escola</label>
+                                    <input type="text" id="nomeEscola" placeholder="Nome da Escola">
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button class="btn" onclick="criarEscola()">
+                                    <i class="fas fa-plus"></i>
+                                    Criar Escola
+                                </button>
+                            </div>
+                            <h4 style="margin-top: 30px;"><i class="fas fa-list"></i> Escolas Registradas</h4>
+                            <div id="escolas-list"></div>
+                        </div>
+                    </div>
+
+                    <!-- Criar Usuário section -->
+                    <div id="create-user-section" class="content-section" style="display: none;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-user-plus"></i> Criar Novo Usuário</h3>
+                            </div>
+                            <div class="form-row">
+                                <div class="input-group">
+                                    <label for="username">Username</label>
+                                    <input type="text" id="username" placeholder="Username">
+                                </div>
+                                <div class="input-group">
+                                    <label for="password">Senha</label>
+                                    <input type="password" id="password" placeholder="Senha">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="input-group">
+                                    <label for="role">Role</label>
+                                    <select id="role">
+                                        <option value="admin">Admin</option>
+                                        <option value="usuario">Usuário</option>
+                                    </select>
+                                </div>
+                                <div class="input-group">
+                                    <label for="empresa_id">Escola</label>
+                                    <select id="empresa_id"></select>
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button class="btn" onclick="criarUsuario()">
+                                    <i class="fas fa-save"></i>
+                                    Criar Usuário
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Usuários Criados section -->
+                    <div id="all-users-section" class="content-section" style="display: none;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-list"></i> Todos os Usuários</h3>
+                            </div>
+                            <div id="all-users-list"></div>
+                        </div>
+                    </div>
+
+                    <!-- Promover/Rebaixar section -->
+                    <div id="promote-section" class="content-section" style="display: none;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-user-exchange"></i> Gerenciar Níveis de Usuários</h3>
+                            </div>
+                            <div class="form-row">
+                                <div class="input-group">
+                                    <label for="promoteSchool">Selecionar Escola</label>
+                                    <select id="promoteSchool" onchange="loadUsersBySchool()"></select>
+                                </div>
+                            </div>
+                            <div id="promote-users-list"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Username</th>
-                        <th>Escola</th>
-                        <th>Role</th>
-                        <th>Status</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody id="promoteUsersTable"></tbody>
-            </table>
         </div>
     </div>
+
+    <!-- Components -->
+    <script src="../components/Sidebar.js"></script>
+    <script src="../components/DashboardCards.js"></script>
     <script src="../js/superadmin.js"></script>
 </body>
 </html>

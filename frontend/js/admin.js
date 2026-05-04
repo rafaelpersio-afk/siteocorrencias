@@ -1,6 +1,82 @@
 // Admin script
 const API_URL = window.location.origin;
 
+let currentUser = null;
+let sidebar = null;
+let dashboardCards = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeAdmin();
+});
+
+async function initializeAdmin() {
+    try {
+        // Get current user info from token
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/index.html';
+            return;
+        }
+
+        // Decode token to get user info
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        currentUser = payload;
+
+        // Initialize components
+        const sidebarContainer = document.getElementById('sidebar-container');
+        sidebar = new Sidebar(sidebarContainer, currentUser, 'users');
+
+        const cardsContainer = document.getElementById('dashboard-cards');
+        dashboardCards = new DashboardCards(cardsContainer);
+
+        // Load initial data
+        await loadUsers();
+        await loadNiveisUsers();
+        await loadOcorrencias();
+
+        // Listen for sidebar navigation
+        document.addEventListener('sidebarNavigate', handleNavigation);
+
+    } catch (error) {
+        console.error('Error initializing admin:', error);
+        logout();
+    }
+}
+
+async function handleNavigation(event) {
+    const { page } = event.detail;
+    hideAllSections();
+
+    switch(page) {
+        case 'dashboard':
+            // Show dashboard cards
+            break;
+        case 'users':
+            showSection('aprovar-section');
+            await loadUsers();
+            break;
+        case 'incidents':
+            showSection('ocorrencias-section');
+            await loadOcorrencias();
+            break;
+        default:
+            showSection('aprovar-section');
+            break;
+    }
+}
+
+function showSection(sectionId) {
+    const section = document.getElementById(sectionId);
+    if (section) {
+        section.style.display = 'block';
+    }
+}
+
+function hideAllSections() {
+    const sections = document.querySelectorAll('.content-section');
+    sections.forEach(section => section.style.display = 'none');
+}
+
 function getAuthHeaders() {
     return {
         'Content-Type': 'application/json',
@@ -19,71 +95,208 @@ function getCurrentUserId() {
     }
 }
 
-const currentUserId = getCurrentUserId();
+async function loadUsers() {
+    try {
+        const response = await fetch(`${API_URL}/users`, {
+            headers: getAuthHeaders()
+        });
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Set today's date as default
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('data').value = today;
-    
-    // Set current time as default
-    const now = new Date();
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    document.getElementById('hora').value = `${hours}:${minutes}`;
-    
-    fetchUsers();
-    fetchAllUsersForNiveis();
-    fetchOcorrencias();
-});
+        if (!response.ok) throw new Error('Failed to load users');
 
-function showTab(tabId, event) {
-    const tabs = document.querySelectorAll('.tab-content');
-    tabs.forEach(tab => tab.classList.remove('active'));
-    document.getElementById(tabId).classList.add('active');
-
-    const buttons = document.querySelectorAll('.tab-button');
-    buttons.forEach(button => button.classList.remove('active'));
-    event.target.classList.add('active');
-    
-    if (tabId === 'ocorrencias') {
-        fetchOcorrencias();
-    }
-    if (tabId === 'niveis') {
-        fetchAllUsersForNiveis();
+        const data = await response.json();
+        renderUsers(data);
+    } catch (error) {
+        console.error('Error loading users:', error);
+        showError('Erro ao carregar usuários');
     }
 }
 
-function fetchUsers() {
-    fetch(`${API_URL}/users`, {
-        headers: getAuthHeaders()
-    })
-    .then(response => response.json())
-    .then(data => {
-        const tbody = document.getElementById('usersTable');
-        tbody.innerHTML = '';
-        
-        const pendentes = data.filter(u => u.status === 'pendente');
-        
-        if (pendentes.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #999;">Nenhum usuário pendente</td></tr>';
-            return;
-        }
-        
-        pendentes.forEach(user => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><strong>${user.username}</strong></td>
-                <td><span style="background: #e7f3ff; padding: 5px 10px; border-radius: 3px; font-size: 12px;">${user.role}</span></td>
-                <td class="status-${user.status}"><strong>${user.status}</strong></td>
-                <td>
-                    <button class="btn" onclick="aprovar(${user.id})"><i class="fas fa-check"></i> Aprovar</button>
-                    <button class="btn btn-danger" onclick="recusar(${user.id})"><i class="fas fa-times"></i> Recusar</button>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
+function renderUsers(data) {
+    const container = document.getElementById('users-pending-list');
+
+    const pendentes = data.filter(u => u.status === 'pendente');
+
+    if (pendentes.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-users"></i>
+                <h4>Nenhum usuário pendente</h4>
+                <p>Todos os usuários foram aprovados ou não há solicitações pendentes.</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = `
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="usersTable"></tbody>
+        </table>
+    `;
+
+    const tbody = document.getElementById('usersTable');
+    tbody.innerHTML = '';
+
+    pendentes.forEach(user => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><strong>${user.username}</strong></td>
+            <td><span style="background: #e7f3ff; padding: 5px 10px; border-radius: 3px; font-size: 12px;">${user.role}</span></td>
+            <td class="status-${user.status}"><strong>${user.status}</strong></td>
+            <td>
+                <button class="btn" onclick="aprovar(${user.id})"><i class="fas fa-check"></i> Aprovar</button>
+                <button class="btn btn-danger" onclick="recusar(${user.id})"><i class="fas fa-times"></i> Recusar</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
     });
+}
+
+async function loadNiveisUsers() {
+    try {
+        const response = await fetch(`${API_URL}/users`, {
+            headers: getAuthHeaders()
+        });
+
+        if (!response.ok) throw new Error('Failed to load users');
+
+        const data = await response.json();
+        renderNiveisUsers(data);
+    } catch (error) {
+        console.error('Error loading users for niveis:', error);
+        showError('Erro ao carregar usuários');
+    }
+}
+
+function renderNiveisUsers(data) {
+    const container = document.getElementById('users-niveis-list');
+
+    if (data.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-users"></i>
+                <h4>Nenhum usuário encontrado</h4>
+                <p>Não há usuários para gerenciar.</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = `
+        <p style="color: #666; margin-bottom: 20px;">Aqui você pode promover usuários a Admin ou rebaixá-los para Usuário</p>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Nível Atual</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="niveisTable"></tbody>
+        </table>
+    `;
+
+    const tbody = document.getElementById('niveisTable');
+    tbody.innerHTML = '';
+
+    data.forEach(user => {
+        if (user.id === currentUser.id) return; // Não mostrar o próprio usuário
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><strong>${user.username}</strong></td>
+            <td><span style="background: #e7f3ff; padding: 5px 10px; border-radius: 3px; font-size: 12px;">${user.role}</span></td>
+            <td class="status-${user.status}"><strong>${user.status}</strong></td>
+            <td>
+                ${user.role === 'usuario' ? `<button class="btn" onclick="promover(${user.id})"><i class="fas fa-arrow-up"></i> Promover</button>` : ''}
+                ${user.role === 'admin' ? `<button class="btn btn-danger" onclick="rebaixar(${user.id})"><i class="fas fa-arrow-down"></i> Rebaixar</button>` : ''}
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+async function loadOcorrencias() {
+    try {
+        const response = await fetch(`${API_URL}/ocorrencias`, {
+            headers: getAuthHeaders()
+        });
+
+        if (!response.ok) throw new Error('Failed to load ocorrencias');
+
+        const data = await response.json();
+        renderOcorrencias(data);
+    } catch (error) {
+        console.error('Error loading ocorrencias:', error);
+        showError('Erro ao carregar ocorrências');
+    }
+}
+
+function renderOcorrencias(data) {
+    const container = document.getElementById('ocorrencias-list');
+
+    if (!data || data.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h4>Nenhuma ocorrência encontrada</h4>
+                <p>Não há ocorrências registradas na escola.</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = data.map(ocorrencia => `
+        <div class="incident-card">
+            <div class="incident-header">
+                <div>
+                    <div class="incident-title">${ocorrencia.aluno} - ${ocorrencia.turma}</div>
+                    <div class="incident-meta">
+                        <span><i class="fas fa-calendar"></i> ${formatDate(ocorrencia.data)}</span>
+                        <span><i class="fas fa-clock"></i> ${ocorrencia.hora}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="incident-description">${ocorrencia.descricao}</div>
+            <div class="incident-date">Criado em ${formatDateTime(ocorrencia.created_at || new Date().toISOString())}</div>
+        </div>
+    `).join('');
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR');
+}
+
+function formatDateTime(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleString('pt-BR');
+}
+
+function showError(message) {
+    // Simple error display
+    alert(message);
+}
+
+// Legacy functions for backward compatibility
+function fetchUsers() {
+    loadUsers();
+}
+
+function fetchAllUsersForNiveis() {
+    loadNiveisUsers();
+}
+
+function fetchOcorrencias() {
+    loadOcorrencias();
 }
 
 function aprovar(userId) {
@@ -95,14 +308,14 @@ function aprovar(userId) {
     .then(response => response.json())
     .then(data => {
         alert('Usuário aprovado com sucesso!');
-        fetchUsers();
+        loadUsers();
     })
     .catch(error => alert('Erro ao aprovar usuário'));
 }
 
 function recusar(userId) {
     if (!confirm('Deseja realmente recusar este usuário?')) return;
-    
+
     fetch(`${API_URL}/recusar`, {
         method: 'POST',
         headers: getAuthHeaders(),
@@ -111,136 +324,14 @@ function recusar(userId) {
     .then(response => response.json())
     .then(data => {
         alert('Usuário recusado!');
-        fetchUsers();
+        loadUsers();
     })
     .catch(error => alert('Erro ao recusar usuário'));
 }
 
-function criarOcorrencia() {
-    const aluno = document.getElementById('aluno').value.trim();
-    const turma = document.getElementById('turma').value.trim();
-    const descricao = document.getElementById('descricao').value.trim();
-    const data = document.getElementById('data').value;
-    const hora = document.getElementById('hora').value;
-
-    if (!aluno || !turma || !descricao || !data || !hora) {
-        alert('Preencha todos os campos');
-        return;
-    }
-
-    fetch(`${API_URL}/ocorrencia`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ aluno, turma, descricao, data, hora })
-    })
-    .then(response => response.json())
-    .then(data => {
-        alert('Ocorrência registrada com sucesso!');
-        document.getElementById('aluno').value = '';
-        document.getElementById('turma').value = '';
-        document.getElementById('descricao').value = '';
-        
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('data').value = today;
-        
-        fetchOcorrencias();
-    })
-    .catch(error => {
-        console.error('Erro:', error);
-        alert('Erro ao registrar ocorrência');
-    });
-}
-
-function fetchOcorrencias() {
-    fetch(`${API_URL}/ocorrencias`, {
-        headers: getAuthHeaders()
-    })
-    .then(response => response.json())
-    .then(data => {
-        const div = document.getElementById('ocorrenciasList');
-        div.innerHTML = '';
-        
-        if (data.length === 0) {
-            div.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">Nenhuma ocorrência registrada</p>';
-            return;
-        }
-        
-        data.forEach(ocorrencia => {
-            const card = document.createElement('div');
-            card.className = 'card';
-            card.style.borderLeft = '4px solid #ffc107';
-            card.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: start;">
-                    <div>
-                        <h4 style="margin: 0 0 10px 0; color: #333;">
-                            <i class="fas fa-user"></i> ${ocorrencia.aluno}
-                        </h4>
-                        <p style="margin: 5px 0; color: #666;">
-                            <strong>Turma:</strong> ${ocorrencia.turma}
-                        </p>
-                        <p style="margin: 5px 0; color: #666;">
-                            <strong>Descrição:</strong> ${ocorrencia.descricao}
-                        </p>
-                        <p style="margin: 5px 0; color: #999; font-size: 12px;">
-                            <i class="fas fa-calendar"></i> ${ocorrencia.data} às ${ocorrencia.hora}
-                        </p>
-                    </div>
-                </div>
-            `;
-            div.appendChild(card);
-        });
-    });
-}
-
-function logout() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('role');
-    window.location.href = '/index.html';
-}
-
-function fetchAllUsersForNiveis() {
-    fetch(`${API_URL}/users`, {
-        headers: getAuthHeaders()
-    })
-    .then(response => response.json())
-    .then(data => {
-        const tbody = document.getElementById('niveisTable');
-        tbody.innerHTML = '';
-        
-        if (data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #999;">Nenhum usuário na sua escola</td></tr>';
-            return;
-        }
-        
-        data.forEach(user => {
-            const tr = document.createElement('tr');
-            let acoes = '';
-            
-            if (user.id !== currentUserId) {
-                if (user.role === 'usuario') {
-                    acoes = `<button class="btn" onclick="promoverAdmin(${user.id})"><i class="fas fa-arrow-up"></i> Promover a Admin</button>`;
-                } else if (user.role === 'admin') {
-                    acoes = `<button class="btn btn-danger" onclick="rebaixarAdmin(${user.id})"><i class="fas fa-arrow-down"></i> Rebaixar</button>`;
-                }
-            }
-            
-            tr.innerHTML = `
-                <td><strong>${user.username}</strong></td>
-                <td><span style="background: ${user.role === 'admin' ? '#ffc107' : '#e7f3ff'}; padding: 5px 10px; border-radius: 3px; font-size: 12px; color: ${user.role === 'admin' ? '#000' : '#000'};">${user.role}</span></td>
-                <td class="status-${user.status}">${user.status}</td>
-                <td>${acoes}</td>
-            `;
-            tbody.appendChild(tr);
-        });
-    })
-    .catch(error => {
-        console.error('Erro ao buscar usuários:', error);
-    });
-}
-
-function promoverAdmin(userId) {
+function promover(userId) {
     if (!confirm('Deseja promover este usuário a Admin?')) return;
-    
+
     fetch(`${API_URL}/promover-admin`, {
         method: 'POST',
         headers: getAuthHeaders(),
@@ -249,7 +340,7 @@ function promoverAdmin(userId) {
     .then(response => response.json())
     .then(data => {
         alert('Usuário promovido a Admin!');
-        fetchAllUsersForNiveis();
+        loadNiveisUsers();
     })
     .catch(error => {
         console.error('Erro:', error);
@@ -257,9 +348,9 @@ function promoverAdmin(userId) {
     });
 }
 
-function rebaixarAdmin(userId) {
-    if (!confirm('Deseja rebaixar este usuário para Usuário normal?')) return;
-    
+function rebaixar(userId) {
+    if (!confirm('Deseja rebaixar este usuário?')) return;
+
     fetch(`${API_URL}/rebaixar-admin`, {
         method: 'POST',
         headers: getAuthHeaders(),
@@ -268,10 +359,52 @@ function rebaixarAdmin(userId) {
     .then(response => response.json())
     .then(data => {
         alert('Usuário rebaixado!');
-        fetchAllUsersForNiveis();
+        loadNiveisUsers();
     })
     .catch(error => {
         console.error('Erro:', error);
         alert('Erro ao rebaixar usuário');
     });
+}
+
+async function createIncident(event) {
+    event.preventDefault();
+
+    const formData = new FormData(event.target);
+    const incidentData = {
+        aluno: formData.get('aluno'),
+        turma: formData.get('turma'),
+        descricao: formData.get('descricao'),
+        data: formData.get('data'),
+        hora: formData.get('hora')
+    };
+
+    try {
+        const response = await fetch(`${API_URL}/ocorrencia`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(incidentData)
+        });
+
+        if (!response.ok) throw new Error('Failed to create incident');
+
+        const result = await response.json();
+        alert('Ocorrência criada com sucesso!');
+
+        // Reset form
+        event.target.reset();
+
+        // Refresh data
+        await loadOcorrencias();
+
+    } catch (error) {
+        console.error('Error creating incident:', error);
+        alert('Erro ao criar ocorrência');
+    }
+}
+
+function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    window.location.href = '/index.html';
 }
