@@ -6,41 +6,8 @@
     <title>Sistema de Ocorrências - Login</title>
     <link rel="stylesheet" href="frontend/css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        .back-to-schools {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-            transition: background 0.3s;
-        }
-        .back-to-schools:hover {
-            background: #764ba2;
-        }
-        .login-container {
-            position: relative;
-        }
-        .school-info {
-            text-align: center;
-            margin-top: 20px;
-            color: #666;
-            font-size: 14px;
-        }
-    </style>
 </head>
 <body>
-    <a href="index.html" class="back-to-schools"><i class="fas fa-arrow-left"></i> Voltar</a>
-    
     <div class="login-container">
         <div class="login-card">
             <h2><i class="fas fa-school"></i> Sistema de Ocorrências</h2>
@@ -53,10 +20,11 @@
                     <label for="password"><i class="fas fa-lock"></i> Senha</label>
                     <input type="password" id="password" name="password" required>
                 </div>
-                <div class="input-group" id="schoolSelectGroup" style="display: none;">
-                    <label for="empresa"><i class="fas fa-building"></i> Escola</label>
-                    <select id="empresa" name="empresa_id">
-                        <option value="">Selecione uma escola (opcional para super_admin)</option>
+                <div class="input-group">
+                    <label for="empresa"><i class="fas fa-building"></i> Unidade Escolar</label>
+                    <select id="empresa" name="empresa_id" required>
+                        <option value="">Selecione sua unidade escolar</option>
+                        <!-- Opções serão carregadas via JavaScript -->
                     </select>
                 </div>
                 <button type="submit" class="btn-login">ENTRAR</button>
@@ -71,7 +39,7 @@
             ? 'http://localhost:3000' 
             : `https://${window.location.hostname}`;
 
-        // Extrair parâmetros da URL
+        // Extrair parâmetros da URL (mantido para compatibilidade futura)
         const urlParams = new URLSearchParams(window.location.search);
         const selectedSchoolId = urlParams.get('school');
         const selectedSchoolName = decodeURIComponent(urlParams.get('schoolName') || '');
@@ -79,52 +47,77 @@
         // Carregar lista de escolas
         async function loadSchools() {
             try {
+                console.log('Carregando escolas...');
                 const response = await fetch(`${API_URL}/empresas`);
+
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP: ${response.status}`);
+                }
+
                 const schools = await response.json();
+                console.log('Escolas carregadas:', schools);
+
                 const select = document.getElementById('empresa');
-                
-                // Limpar opções anteriores (deixar apenas a padrão)
+
+                // Limpar opções existentes exceto a primeira
                 while (select.options.length > 1) {
                     select.remove(1);
                 }
-                
+
+                // Adicionar opção padrão se não houver nenhuma
+                if (select.options.length === 0) {
+                    const defaultOption = document.createElement('option');
+                    defaultOption.value = '';
+                    defaultOption.textContent = 'Selecione sua unidade escolar';
+                    select.appendChild(defaultOption);
+                }
+
+                // Adicionar escolas
                 schools.forEach(school => {
                     const option = document.createElement('option');
                     option.value = school.id;
                     option.textContent = school.nome;
                     select.appendChild(option);
                 });
+
+                console.log(`${schools.length} escolas carregadas com sucesso`);
+
             } catch (error) {
                 console.error('Erro ao carregar escolas:', error);
+                alert('Erro ao carregar lista de escolas. Tente recarregar a página.');
             }
         }
 
         // Inicializar página
         document.addEventListener('DOMContentLoaded', async () => {
+            console.log('Página carregada, inicializando...');
             await loadSchools();
 
-            // Se uma escola foi selecionada, configurar
-            if (selectedSchoolId) {
-                document.getElementById('empresa').value = selectedSchoolId;
-                document.getElementById('schoolInfo').textContent = `Conectado em: ${selectedSchoolName}`;
-                document.getElementById('schoolSelectGroup').style.display = 'none';
-            } else {
-                // Mostrar o selector de escolas se não houver seleção prévia
-                document.getElementById('schoolSelectGroup').style.display = 'block';
-                document.getElementById('schoolInfo').textContent = '';
-            }
+            // Sempre mostrar o selector de escolas
+            document.getElementById('schoolInfo').textContent = 'Selecione sua unidade escolar para continuar';
         });
 
         // Manipular submissão do formulário de login
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const username = document.getElementById('username').value;
+            const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
             const empresaIdValue = document.getElementById('empresa').value;
 
+            // Validações
+            if (!username) {
+                alert('Por favor, digite o nome de usuário');
+                return;
+            }
+
+            if (!password) {
+                alert('Por favor, digite a senha');
+                return;
+            }
+
             if (!empresaIdValue) {
-                alert('Por favor, selecione uma escola');
+                alert('Por favor, selecione uma unidade escolar');
                 return;
             }
 
@@ -153,7 +146,7 @@
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('role', data.role);
                     localStorage.setItem('empresa_id', empresaIdValue);
-                    window.location.href = 'frontend/pages/occurrences.html';
+                    window.location.href = 'frontend/pages/dashboard.html';
                 } else {
                     alert(data.message || data.error || 'Erro ao fazer login');
                 }
