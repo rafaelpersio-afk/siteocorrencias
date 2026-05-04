@@ -1,6 +1,13 @@
 // Super Admin script
 const API_URL = window.location.origin;
 
+function getAuthHeaders() {
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+    };
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     fetchEmpresas();
     fetchAllUsers();
@@ -67,7 +74,7 @@ function fetchEmpresas() {
 
 function fetchAllUsers() {
     fetch(`${API_URL}/users`, {
-        headers: { 'Authorization': localStorage.getItem('token') }
+        headers: getAuthHeaders()
     })
     .then(response => response.json())
     .then(data => {
@@ -88,7 +95,7 @@ function fetchAllUsers() {
 
 function fetchAllUsersWithPasswords() {
     fetch(`${API_URL}/users-criados`, {
-        headers: { 'Authorization': localStorage.getItem('token') }
+        headers: getAuthHeaders()
     })
     .then(response => response.json())
     .then(data => {
@@ -114,7 +121,7 @@ function loadUsersBySchool() {
         return;
     }
     fetch(`${API_URL}/users?empresa_id=${schoolId}`, {
-        headers: { 'Authorization': localStorage.getItem('token') }
+        headers: getAuthHeaders()
     })
     .then(response => response.json())
     .then(data => {
@@ -148,10 +155,7 @@ function criarEscola() {
     }
     fetch(`${API_URL}/empresa`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': localStorage.getItem('token')
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ nome })
     })
     .then(response => response.json())
@@ -176,10 +180,7 @@ function criarUsuario() {
     
     fetch(`${API_URL}/createUser`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': localStorage.getItem('token')
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ username, password, role, empresa_id })
     })
     .then(response => response.json())
@@ -194,10 +195,7 @@ function criarUsuario() {
 function promoverUsuario(userId) {
     fetch(`${API_URL}/promover`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': localStorage.getItem('token')
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ user_id: userId })
     })
     .then(response => response.json())
@@ -213,10 +211,7 @@ function rebaixarUsuario(userId) {
     
     fetch(`${API_URL}/rebaixar`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': localStorage.getItem('token')
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ user_id: userId })
     })
     .then(response => response.json())
@@ -230,5 +225,5 @@ function rebaixarUsuario(userId) {
 function logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
-    window.location.href = '../index.html';
+    window.location.href = '/index.html';
 }

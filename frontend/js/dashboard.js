@@ -15,7 +15,7 @@ async function initializeDashboard() {
         // Get current user info from token
         const token = localStorage.getItem('token');
         if (!token) {
-            window.location.href = '../index.html';
+            window.location.href = '/index.html';
             return;
         }
 
@@ -398,5 +398,5 @@ function showInfo(message) {
 function logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
-    window.location.href = '../index.html';
+    window.location.href = '/index.html';
 }

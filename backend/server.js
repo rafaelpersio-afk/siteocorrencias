@@ -39,8 +39,11 @@ const dataDb = new sqlite3.Database(path.join(__dirname, 'database.db'));
 
 // Middleware to verify token (legacy)
 function verifyToken(req, res, next) {
-  const token = req.headers['authorization'];
+  let token = req.headers['authorization'];
   if (!token) return res.status(403).json({ error: 'Token required' });
+  if (token.startsWith('Bearer ')) {
+    token = token.slice(7);
+  }
   jwt.verify(token, SECRET_KEY, (err, decoded) => {
     if (err) return res.status(401).json({ error: 'Invalid token' });
     req.user = decoded;
@@ -208,6 +211,9 @@ app.post('/promover-admin', verifyToken, (req, res) => {
 app.post('/rebaixar-admin', verifyToken, (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Acesso negado' });
   const { user_id } = req.body;
+  if (parseInt(user_id) === req.user.id) {
+    return res.status(400).json({ error: 'Administradores não podem se rebaixar' });
+  }
   authDb.run("UPDATE users SET role = 'usuario' WHERE id = ? AND empresa_id = ?", [user_id, req.user.empresa_id], function(err) {
     if (err) return res.status(400).json({ error: 'Erro ao rebaixar usuário' });
     res.json({ message: 'Usuário rebaixado' });
@@ -240,10 +246,10 @@ app.get('/empresas', (req, res) => {
 
 // Rota raiz
 app.get('/', (req, res) => {
-  res.sendFile(path.join(frontendPath, 'index.html'));
+  res.sendFile(path.join(rootPath, 'index.html'));
 });
 
-// Rota fallback para SPA - serve index.html para rotas não-API
+// Rota fallback para SPA - serve root index.html para rotas não-API
 app.use((req, res, next) => {
   if (!req.path.startsWith('/api') && !req.path.startsWith('/login') && !req.path.startsWith('/register') &&
       !req.path.startsWith('/createUser') && !req.path.startsWith('/users') && !req.path.startsWith('/empresa') &&
@@ -251,7 +257,7 @@ app.use((req, res, next) => {
       !req.path.startsWith('/rebaixar') && !req.path.startsWith('/ocorrencia') && !req.path.startsWith('/ocorrencias') &&
       !req.path.startsWith('/empresas') && !req.path.startsWith('/promover-admin') && !req.path.startsWith('/rebaixar-admin') &&
       !req.path.startsWith('/users-criados') && req.method === 'GET') {
-    return res.sendFile(path.join(frontendPath, 'index.html'));
+    return res.sendFile(path.join(rootPath, 'index.html'));
   }
   next();
 });

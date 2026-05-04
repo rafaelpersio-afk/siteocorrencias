@@ -28,7 +28,7 @@ function createUser(e) {
 
     const headers = { 'Content-Type': 'application/json' };
     const token = localStorage.getItem('token');
-    if (token) headers.Authorization = token;
+    if (token) headers.Authorization = `Bearer ${token}`;
 
     fetch(`${API_URL}/register`, {
         method: 'POST',
@@ -39,7 +39,7 @@ function createUser(e) {
     .then(data => {
         if (data.id) {
             alert('Usuário criado com sucesso! Aguarde aprovação.');
-            window.location.href = '../index.html';
+            window.location.href = '/index.html';
         } else {
             alert(data.error);
         }

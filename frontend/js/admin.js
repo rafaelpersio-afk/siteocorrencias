@@ -1,6 +1,26 @@
 // Admin script
 const API_URL = window.location.origin;
 
+function getAuthHeaders() {
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+    };
+}
+
+function getCurrentUserId() {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) return null;
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.id;
+    } catch (error) {
+        return null;
+    }
+}
+
+const currentUserId = getCurrentUserId();
+
 document.addEventListener('DOMContentLoaded', function() {
     // Set today's date as default
     const today = new Date().toISOString().split('T')[0];
@@ -36,7 +56,7 @@ function showTab(tabId, event) {
 
 function fetchUsers() {
     fetch(`${API_URL}/users`, {
-        headers: { 'Authorization': localStorage.getItem('token') }
+        headers: getAuthHeaders()
     })
     .then(response => response.json())
     .then(data => {
@@ -69,10 +89,7 @@ function fetchUsers() {
 function aprovar(userId) {
     fetch(`${API_URL}/aprovar`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': localStorage.getItem('token')
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ user_id: userId })
     })
     .then(response => response.json())
@@ -88,10 +105,7 @@ function recusar(userId) {
     
     fetch(`${API_URL}/recusar`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': localStorage.getItem('token')
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ user_id: userId })
     })
     .then(response => response.json())
@@ -116,10 +130,7 @@ function criarOcorrencia() {
 
     fetch(`${API_URL}/ocorrencia`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': localStorage.getItem('token')
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ aluno, turma, descricao, data, hora })
     })
     .then(response => response.json())
@@ -142,7 +153,7 @@ function criarOcorrencia() {
 
 function fetchOcorrencias() {
     fetch(`${API_URL}/ocorrencias`, {
-        headers: { 'Authorization': localStorage.getItem('token') }
+        headers: getAuthHeaders()
     })
     .then(response => response.json())
     .then(data => {
@@ -184,12 +195,12 @@ function fetchOcorrencias() {
 function logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('role');
-    window.location.href = '../index.html';
+    window.location.href = '/index.html';
 }
 
 function fetchAllUsersForNiveis() {
     fetch(`${API_URL}/users`, {
-        headers: { 'Authorization': localStorage.getItem('token') }
+        headers: getAuthHeaders()
     })
     .then(response => response.json())
     .then(data => {
@@ -205,10 +216,12 @@ function fetchAllUsersForNiveis() {
             const tr = document.createElement('tr');
             let acoes = '';
             
-            if (user.role === 'usuario') {
-                acoes = `<button class="btn" onclick="promoverAdmin(${user.id})"><i class="fas fa-arrow-up"></i> Promover a Admin</button>`;
-            } else if (user.role === 'admin') {
-                acoes = `<button class="btn btn-danger" onclick="rebaixarAdmin(${user.id})"><i class="fas fa-arrow-down"></i> Rebaixar</button>`;
+            if (user.id !== currentUserId) {
+                if (user.role === 'usuario') {
+                    acoes = `<button class="btn" onclick="promoverAdmin(${user.id})"><i class="fas fa-arrow-up"></i> Promover a Admin</button>`;
+                } else if (user.role === 'admin') {
+                    acoes = `<button class="btn btn-danger" onclick="rebaixarAdmin(${user.id})"><i class="fas fa-arrow-down"></i> Rebaixar</button>`;
+                }
             }
             
             tr.innerHTML = `
@@ -230,10 +243,7 @@ function promoverAdmin(userId) {
     
     fetch(`${API_URL}/promover-admin`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': localStorage.getItem('token')
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ user_id: userId })
     })
     .then(response => response.json())
@@ -252,10 +262,7 @@ function rebaixarAdmin(userId) {
     
     fetch(`${API_URL}/rebaixar-admin`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': localStorage.getItem('token')
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ user_id: userId })
     })
     .then(response => response.json())
